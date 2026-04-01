@@ -2,13 +2,17 @@ package com.btgpactual.fondos.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.btgpactual.fondos.dto.CancelacionRequest;
+import com.btgpactual.fondos.dto.ClienteRequest;
+import com.btgpactual.fondos.dto.ClienteResponse;
 import com.btgpactual.fondos.dto.SuscripcionRequest;
 import com.btgpactual.fondos.dto.TransaccionResponse;
 import com.btgpactual.fondos.exception.ClienteNoEncontradoException;
@@ -22,6 +26,7 @@ import com.btgpactual.fondos.model.Transaccion;
 import com.btgpactual.fondos.repository.ClienteRepository;
 import com.btgpactual.fondos.repository.FondoRepository;
 import com.btgpactual.fondos.repository.TransaccionRepository;
+import com.btgpactual.fondos.service.ClienteService;
 import com.btgpactual.fondos.service.FondoService;
 import com.btgpactual.fondos.utils.GeneradorIdUnico;
 import com.btgpactual.fondos.utils.MensajesConstantes;
@@ -32,12 +37,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FondoServiceImpl implements FondoService {
+public class FondoServiceImpl implements FondoService, ClienteService {
 
 	private final ClienteRepository clienteRepository;
 	private final FondoRepository fondoRepository;
 	private final TransaccionRepository transaccionRepository;
 	private final NotificacionServiceImpl notificacionService;
+
+	private final ModelMapper modelMapper;
 
 	@Transactional
 	public TransaccionResponse suscribirFondo(SuscripcionRequest request) {
@@ -188,6 +195,29 @@ public class FondoServiceImpl implements FondoService {
 		log.info(MensajesConstantes.LOG_HISTORIAL_ENCONTRADO, transacciones.size(), idCliente);
 
 		return transacciones.stream().map(this::mapToTransaccionResponse).collect(Collectors.toList());
+	}
+
+	@Override
+	public ClienteResponse crearCliente(ClienteRequest request) {
+		log.info("Creando cliente con ID: {}", request.getId());
+
+		if (clienteRepository.existsById(request.getId())) {
+			throw new RuntimeException("Ya existe un cliente con ID: " + request.getId());
+		}
+
+		Cliente cliente = modelMapper.map(request, Cliente.class);
+
+		if (cliente.getSaldo() == null) {
+			cliente.setSaldo(BigDecimal.ZERO);
+		}
+		if (cliente.getFondosSuscritos() == null) {
+			cliente.setFondosSuscritos(new ArrayList<>());
+		}
+
+		cliente = clienteRepository.save(cliente);
+		log.info("Cliente creado exitosamente: {}", cliente.getId());
+
+		return modelMapper.map(cliente, ClienteResponse.class);
 	}
 
 	private TransaccionResponse mapToTransaccionResponse(Transaccion transaccion) {
