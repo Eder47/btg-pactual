@@ -199,10 +199,10 @@ public class FondoServiceImpl implements FondoService, ClienteService {
 
 	@Override
 	public ClienteResponse crearCliente(ClienteRequest request) {
-		log.info("Creando cliente con ID: {}", request.getId());
+		log.info(MensajesConstantes.LOG_CREANDO_CLIENTE, request.getId());
 
 		if (clienteRepository.existsById(request.getId())) {
-			throw new RuntimeException("Ya existe un cliente con ID: " + request.getId());
+			throw new RuntimeException(String.format(MensajesConstantes.ERROR_CLIENTE_YA_EXISTE, request.getId()));
 		}
 
 		Cliente cliente = modelMapper.map(request, Cliente.class);
@@ -215,7 +215,7 @@ public class FondoServiceImpl implements FondoService, ClienteService {
 		}
 
 		cliente = clienteRepository.save(cliente);
-		log.info("Cliente creado exitosamente: {}", cliente.getId());
+		log.info(MensajesConstantes.LOG_CLIENTE_CREADO_EXITOSAMENTE, cliente.getId());
 
 		return modelMapper.map(cliente, ClienteResponse.class);
 	}
