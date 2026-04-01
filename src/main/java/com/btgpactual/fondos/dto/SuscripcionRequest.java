@@ -1,6 +1,9 @@
 package com.btgpactual.fondos.dto;
 	
 import lombok.Data;
+
+import java.math.BigDecimal;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,5 +16,5 @@ public class SuscripcionRequest {
  private String idFondo;
  
  @NotNull(message = "El monto es obligatorio")
- private Double monto;
+ private BigDecimal monto;
 }
